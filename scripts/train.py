@@ -154,6 +154,12 @@ def discover(archive):
     return trains, tests
 
 
+def balanced_labels(probabilities, n_move):
+    labels = np.zeros(len(probabilities), dtype=int)
+    labels[np.argsort(probabilities)[-n_move:]] = 1
+    return labels
+
+
 def main():
     archive_path = next(Path("data").glob("*.zip"))
     Path("output").mkdir(exist_ok=True)
@@ -186,13 +192,15 @@ def main():
             val_predictions["band_cov_blend"] = 0.5 * val_predictions["bandpower"] + 0.5 * val_predictions["covariance"]
             accuracy = {key: float(np.mean((prob >= 0.5) == val_y))
                         for key, prob in val_predictions.items()}
+            accuracy["bandpower_balanced"] = float(np.mean(
+                balanced_labels(val_predictions["bandpower"], len(val_y) // 2) == val_y))
             scores.append({"subject": subject, "validation_session": valid[0],
                            "validation_trials": len(val_y), "accuracy": accuracy})
             full_bank = [np.concatenate([s[1][i] for s in sessions]) for i in range(len(BANDS))]
             full_y = np.concatenate([s[2] for s in sessions])
             probs = {method: predict(full_bank, full_y, test_bank, method)
                      for method in ("bandpower", "csp", "covariance")}
-            predictions.extend((probs["bandpower"] >= 0.5).astype(int).tolist())
+            predictions.extend(balanced_labels(probs["bandpower"], len(test_x) // 2).tolist())
             print(subject, len(full_y), len(val_y), accuracy, flush=True)
 
     if len(predictions) != 680:
@@ -204,10 +212,10 @@ def main():
     submission.to_csv("output/submission.csv", index=False)
     total = sum(x["validation_trials"] for x in scores)
     overall = {name: sum(x["accuracy"][name] * x["validation_trials"] for x in scores) / total
-               for name in ("bandpower", "csp", "covariance", "blend", "band_cov_blend")}
+               for name in ("bandpower", "bandpower_balanced", "csp", "covariance", "blend", "band_cov_blend")}
     report = {"validation": "last recording session held out per subject",
               "validation_trials": total, "overall_accuracy": overall,
-              "submission_method": "bandpower",
+              "submission_method": "bandpower_balanced",
               "subjects": scores, "submission_rows": len(submission),
               "submission_class_counts": submission["TARGET"].value_counts().to_dict()}
     Path("output/report.json").write_text(json.dumps(report, indent=2))

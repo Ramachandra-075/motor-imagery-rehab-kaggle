@@ -1,0 +1,29 @@
+name: Check Kaggle V4 score
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/check-v4-score.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install kaggle
+      - name: Wait for V4 score
+        run: |
+          for attempt in $(seq 1 20); do
+            kaggle competitions submissions -c low-cost-motor-imagery-decoding-for-rehab -v | head -n 4
+            if kaggle competitions submissions -c low-cost-motor-imagery-decoding-for-rehab -v | grep '^56611289,' | grep -q 'SubmissionStatus.COMPLETE'; then
+              break
+            fi
+            sleep 20
+          done

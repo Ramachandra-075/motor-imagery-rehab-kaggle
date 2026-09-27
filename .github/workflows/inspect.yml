@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/inspect.yml"
-      - "scripts/inspect.py"
+      - "scripts/inspect_data.py"
 permissions:
   contents: read
 jobs:
@@ -26,7 +26,7 @@ jobs:
           mkdir -p data
           kaggle competitions download -c low-cost-motor-imagery-decoding-for-rehab -p data
       - name: Inspect structure and metadata
-        run: python scripts/inspect.py
+        run: python scripts/inspect_data.py
       - name: Upload inspection report
         if: always()
         uses: actions/upload-artifact@v4

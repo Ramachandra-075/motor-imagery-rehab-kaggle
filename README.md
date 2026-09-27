@@ -28,3 +28,6 @@ The training script does not submit to Kaggle. Download the artifact and upload 
 - Three daily submissions remained after submitting the second model. No further submission was made without measured improvement.
 
 The workflows `search.yml`, `search2.yml`, `alignment.yml`, and `ensemble.yml` retain experiment code and reports. A score above 0.80 or first place has **not** been demonstrated. Further work needs a genuinely different validation-backed approach, such as richer supervised time-series models, rather than tuning the existing band-power classifier against the public leaderboard.
+
+- Raw waveform EEGNet with two seeds: recent-session validation **101/170 = 0.594**, larger second-session validation **486/800 = 0.608**. It was not submitted because it underperformed the established model.
+- Live leaderboard checked: joint leaders **0.85**; current account **0.66**. The gap to first place is 0.19 public accuracy points.

@@ -56,3 +56,15 @@ The [five-fold workflow](.github/workflows/fivefold.yml) runs [scripts/fivefold.
 | V5 | 1403/1795 (0.7816) | 0.8600 | 123/170 (0.7235) | 616/800 (0.7700) |
 
 ROC-AUC measures the ranking of move versus rest probabilities over decision thresholds; the competition uses accuracy of hard labels. Random folds can share recording-session characteristics and can be optimistic for a new session. Thus use the separate session-held-out scores to judge likely transfer. V5 has **not** been submitted, and its public accuracy remains unknown.
+
+
+## Unsubmitted V6 candidate (27 September 2026)
+
+The [V6 build workflow](.github/workflows/build-v6.yml) creates and validates a CSV without any Kaggle submission step. [scripts/submit_v6.py](scripts/submit_v6.py) blends 25% V5 predictions with 75% narrow-band temporal EEG predictions. The latter uses 4–38 Hz filters, two post-cue halves, common-average and local-Laplacian references, and both local and pooled subject training.
+
+| Method | Five-fold accuracy | Five-fold subject-weighted ROC-AUC | Recent session | Second session | Earliest session |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| V5 | 1403/1795 (0.7816) | 0.8600 | 123/170 (0.7235) | 616/800 (0.7700) | 610/775 (0.7871) |
+| V6 | 1413/1795 (0.7872) | 0.8682 | 127/170 (0.7471) | 622/800 (0.7775) | 608/775 (0.7845) |
+
+The earliest-session check was run after V6 was selected based on the five-fold and other two session scores. It shows V6 slightly below V5 there, while V6 remains higher on the other measures. Different regularization settings and target-subject sample weights improved five-fold accuracy to approximately 0.795 but performed worse on at least one session-held-out split. Those were not promoted as the candidate. None of these local checks establishes public Kaggle accuracy of 0.80: **V6 has not been submitted**.

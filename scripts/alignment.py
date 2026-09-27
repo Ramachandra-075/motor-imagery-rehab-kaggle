@@ -19,7 +19,7 @@ def align(xtrain, xval, mode):
         return xval
     train_mean = xtrain.mean(0)
     val_mean = xval.mean(0)
-    amount = int(mode[-2:]) / 100 if mode[-2:].isdigit() else 1
+    amount = int(mode[4:] if mode.startswith("mean") else mode[3:]) / 100
     if mode.startswith("mean"):
         return xval + amount * (train_mean - val_mean)
     train_std = np.maximum(xtrain.std(0), 1e-5)

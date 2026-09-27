@@ -17,3 +17,14 @@ Locally, install `kaggle numpy pandas scipy scikit-learn`, download the competit
 - Output is exactly 680 rows in ascending subject and epoch order, with columns `ID,TARGET`, IDs 0–679, and labels `move`/`rest`.
 
 The training script does not submit to Kaggle. Download the artifact and upload its CSV to the competition to see the public score.
+
+
+## Optimization log (27 September 2026)
+
+- Initial balanced band-power submission: Kaggle public accuracy **0.66**.
+- Expanded 4–40 Hz band-power model with whole-epoch and half-epoch features: held-out recent session 123/170 (**0.724**), second held-out session 528/800 (**0.660**), Kaggle public accuracy **0.66**. The measured leaderboard result confirmed the larger validation split; the higher recent-session score did not transfer.
+- Slow EEG (0.5–3 Hz), signed waveform bins, and alternate frequency settings: the best second-split accuracy remained **0.660**.
+- Unsupervised session mean/variance alignment and a blend of slow-wave and band-power models: no improvement over **0.660** on the second split.
+- Three daily submissions remained after submitting the second model. No further submission was made without measured improvement.
+
+The workflows `search.yml`, `search2.yml`, `alignment.yml`, and `ensemble.yml` retain experiment code and reports. A score above 0.80 or first place has **not** been demonstrated. Further work needs a genuinely different validation-backed approach, such as richer supervised time-series models, rather than tuning the existing band-power classifier against the public leaderboard.

@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/inspect.yml"
       - "scripts/inspect_data.py"
+      - "scripts/metadata.py"
 permissions:
   contents: read
 jobs:
@@ -27,11 +28,15 @@ jobs:
           kaggle competitions download -c low-cost-motor-imagery-decoding-for-rehab -p data
       - name: Inspect structure and metadata
         run: python scripts/inspect_data.py
+      - name: Inspect markers and competition instructions
+        run: python scripts/metadata.py
       - name: Upload inspection report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: eeg-data-inspection
-          path: inspection.json
+          path: |
+            inspection.json
+            metadata.json
           if-no-files-found: ignore
           retention-days: 7

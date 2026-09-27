@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/transfer.yml"
+      - "scripts/transfer.py"
   workflow_dispatch:
 permissions:
   contents: read

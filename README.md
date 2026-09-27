@@ -32,3 +32,15 @@ V4 extracts 1 second before and 4.5 seconds after each cue, measures filtered EE
 | V4 spatial ensemble | 119/170 (0.700) | 602/800 (0.753) | **0.77** |
 
 The larger validation split has tracked the Kaggle public score more closely. These held-out scores and the public leaderboard reflect different data, and the private score remains unknown. All five daily submission slots were used on 27 September 2026. A public score above 0.80 and first place have not been achieved. Earlier search, alignment, EEGNet, and ensemble experiments remain in the repository.
+
+
+## Unsubmitted V5 candidate
+
+The [V5 build workflow](.github/workflows/build-v5.yml) only builds and validates a CSV artifact. It has **no Kaggle submission step**. The code in [scripts/submit_v5.py](scripts/submit_v5.py) combines V4 subject-specific predictions with a regularized classifier trained across all labeled subjects after normalizing each subject separately.
+
+| Candidate | Recent session | Second session | Kaggle public score |
+| --- | ---: | ---: | ---: |
+| V4 submitted | 119/170 (0.700) | 602/800 (0.753) | 0.77 |
+| V5 unsubmitted | 123/170 (0.724) | 616/800 (0.770) | Unknown |
+
+The nonlinear transfer model and narrower motor feature subsets did not outperform V5 on the larger held-out split. The V5 CSV differs from V4 in 60 of 680 labels. Its leaderboard score and whether it clears 0.80 can only be established by a later manual Kaggle submission. No additional leaderboard submission was made after V4.

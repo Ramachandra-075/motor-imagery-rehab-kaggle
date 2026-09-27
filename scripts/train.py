@@ -206,7 +206,8 @@ def main():
     overall = {name: sum(x["accuracy"][name] * x["validation_trials"] for x in scores) / total
                for name in ("bandpower", "csp", "covariance", "blend", "band_cov_blend")}
     report = {"validation": "last recording session held out per subject",
-              "validation_trials": total, "overall_accuracy": overall,\n              "submission_method": "bandpower",
+              "validation_trials": total, "overall_accuracy": overall,
+              "submission_method": "bandpower",
               "subjects": scores, "submission_rows": len(submission),
               "submission_class_counts": submission["TARGET"].value_counts().to_dict()}
     Path("output/report.json").write_text(json.dumps(report, indent=2))

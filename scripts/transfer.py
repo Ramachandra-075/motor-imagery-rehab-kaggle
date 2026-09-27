@@ -71,7 +71,7 @@ def main():
                 p = (1-w)*local_p + w*pooled_p
                 key = f"pooled_{w:g}"
                 results[key][split+"_hits"] += score(p, item["y"][mask])
-                results[key][split+"_trials"] += mask.sum()
+                results[key][split+"_trials"] += int(mask.sum())
             details.append({"subject": subject, "split": split, "local_hits": score(local_p, item["y"][mask]),
                             "pooled_hits": score(pooled_p, item["y"][mask])})
         print("validated", subject, flush=True)

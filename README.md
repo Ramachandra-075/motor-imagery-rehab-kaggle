@@ -19,15 +19,16 @@ Locally, install `kaggle numpy pandas scipy scikit-learn`, download the competit
 The training script does not submit to Kaggle. Download the artifact and upload its CSV to the competition to see the public score.
 
 
-## Optimization log (27 September 2026)
+## Current best: 0.77 public accuracy (27 September 2026)
 
-- Initial balanced band-power submission: Kaggle public accuracy **0.66**.
-- Expanded 4–40 Hz band-power model with whole-epoch and half-epoch features: held-out recent session 123/170 (**0.724**), second held-out session 528/800 (**0.660**), Kaggle public accuracy **0.66**. The measured leaderboard result confirmed the larger validation split; the higher recent-session score did not transfer.
-- Slow EEG (0.5–3 Hz), signed waveform bins, and alternate frequency settings: the best second-split accuracy remained **0.660**.
-- Unsupervised session mean/variance alignment and a blend of slow-wave and band-power models: no improvement over **0.660** on the second split.
-- Three daily submissions remained after submitting the second model. No further submission was made without measured improvement.
+The reproducible [V4 workflow](.github/workflows/evaluate-v4.yml) downloads the competition ZIP, runs [scripts/submit_v4.py](scripts/submit_v4.py), checks the 680-row CSV, submits it, and uploads the output artifact. Locally, install `kaggle numpy pandas scipy scikit-learn`, put the ZIP in `data/`, and run `python scripts/submit_v4.py`.
 
-The workflows `search.yml`, `search2.yml`, `alignment.yml`, and `ensemble.yml` retain experiment code and reports. A score above 0.80 or first place has **not** been demonstrated. Further work needs a genuinely different validation-backed approach, such as richer supervised time-series models, rather than tuning the existing band-power classifier against the public leaderboard.
+V4 extracts 1 second before and 4.5 seconds after each cue, measures filtered EEG power in 4–40 Hz bands after the cue and relative to the pre-cue baseline, and averages the probabilities from a common-average-reference logistic model and a local-Laplacian LDA model. The 20 largest probabilities among each subject's 40 test epochs are labeled `move`. This class-balance assumption was validated in training sessions but is not guaranteed by the competition description.
 
-- Raw waveform EEGNet with two seeds: recent-session validation **101/170 = 0.594**, larger second-session validation **486/800 = 0.608**. It was not submitted because it underperformed the established model.
-- Live leaderboard checked: joint leaders **0.85**; current account **0.66**. The gap to first place is 0.19 public accuracy points.
+| Submission | Recent held-out session | Second held-out session | Kaggle public accuracy |
+| --- | ---: | ---: | ---: |
+| Initial and expanded band power | up to 123/170 (0.724) | 528/800 (0.660) | 0.66 |
+| V3 pre-cue common-average model | 121/170 (0.712) | 590/800 (0.738) | 0.73 |
+| V4 spatial ensemble | 119/170 (0.700) | 602/800 (0.753) | **0.77** |
+
+The larger validation split has tracked the Kaggle public score more closely. These held-out scores and the public leaderboard reflect different data, and the private score remains unknown. All five daily submission slots were used on 27 September 2026. A public score above 0.80 and first place have not been achieved. Earlier search, alignment, EEGNet, and ensemble experiments remain in the repository.

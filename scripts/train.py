@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.linalg import eigh, logm
+from scipy.linalg import eigh
 from scipy.signal import butter, sosfiltfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
@@ -182,7 +182,8 @@ def main():
             val_predictions = {}
             for method in ("bandpower", "csp", "covariance"):
                 val_predictions[method] = predict(train_bank, train_y, val_bank, method)
-            val_predictions["blend"] = 0.35 * val_predictions["bandpower"] + 0.65 * val_predictions["csp"]\n            val_predictions["band_cov_blend"] = 0.5 * val_predictions["bandpower"] + 0.5 * val_predictions["covariance"]
+            val_predictions["blend"] = 0.35 * val_predictions["bandpower"] + 0.65 * val_predictions["csp"]
+            val_predictions["band_cov_blend"] = 0.5 * val_predictions["bandpower"] + 0.5 * val_predictions["covariance"]
             accuracy = {key: float(np.mean((prob >= 0.5) == val_y))
                         for key, prob in val_predictions.items()}
             scores.append({"subject": subject, "validation_session": valid[0],

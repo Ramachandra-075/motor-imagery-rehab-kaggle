@@ -1,0 +1,37 @@
+name: Inspect Kaggle EEG dataset
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect.yml"
+      - "scripts/inspect.py"
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Kaggle client
+        run: python -m pip install kaggle pandas numpy scipy
+      - name: Download competition files
+        run: |
+          mkdir -p data
+          kaggle competitions download -c low-cost-motor-imagery-decoding-for-rehab -p data
+      - name: Inspect structure and metadata
+        run: python scripts/inspect.py
+      - name: Upload inspection report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eeg-data-inspection
+          path: inspection.json
+          if-no-files-found: ignore
+          retention-days: 7

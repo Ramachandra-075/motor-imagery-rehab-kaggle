@@ -44,3 +44,15 @@ The [V5 build workflow](.github/workflows/build-v5.yml) only builds and validate
 | V5 unsubmitted | 123/170 (0.724) | 616/800 (0.770) | Unknown |
 
 The nonlinear transfer model and narrower motor feature subsets did not outperform V5 on the larger held-out split. The V5 CSV differs from V4 in 60 of 680 labels. Its leaderboard score and whether it clears 0.80 can only be established by a later manual Kaggle submission. No additional leaderboard submission was made after V4.
+
+
+## Five-fold out-of-fold diagnostic
+
+The [five-fold workflow](.github/workflows/fivefold.yml) runs [scripts/fivefold.py](scripts/fivefold.py) without submitting to Kaggle. Five stratified folds are formed separately within each subject (fixed seed 20260927), and each row is predicted by a model trained without that row.
+
+| Model | Out-of-fold accuracy | Subject-weighted ROC-AUC | Recent session accuracy | Second session accuracy |
+| --- | ---: | ---: | ---: | ---: |
+| V4 | 1395/1795 (0.7772) | 0.8465 | 119/170 (0.700) | 602/800 (0.7525) |
+| V5 | 1403/1795 (0.7816) | 0.8600 | 123/170 (0.7235) | 616/800 (0.7700) |
+
+ROC-AUC measures the ranking of move versus rest probabilities over decision thresholds; the competition uses accuracy of hard labels. Random folds can share recording-session characteristics and can be optimistic for a new session. Thus use the separate session-held-out scores to judge likely transfer. V5 has **not** been submitted, and its public accuracy remains unknown.

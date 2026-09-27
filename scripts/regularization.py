@@ -49,6 +49,8 @@ def predict(records,subject,tr,va):
         rich=.5*np.mean(local[c],axis=0)+.5*np.mean(pooled[c],axis=0)
         result[f"rich_{c:g}"]=rich
         result[f"blend_{c:g}"]=.25*base+.75*rich
+    result["mix_equal"] = .2*base+.4*result["rich_0.03"]+.4*result["rich_0.3"]
+    result["mix_strong"] = .2*base+.2*result["rich_0.03"]+.6*result["rich_0.3"]
     return result
 
 
@@ -75,7 +77,7 @@ def main():
             if regime=="fivefold":
                 oof={name:np.full(len(y),np.nan) for name in
                      ["v5",*[f"rich_{c:g}" for c in STRENGTHS],
-                      *[f"blend_{c:g}" for c in STRENGTHS]]}
+                      *[f"blend_{c:g}" for c in STRENGTHS], "mix_equal", "mix_strong"]}
                 folds=StratifiedKFold(n_splits=5,shuffle=True,random_state=20260927)
                 for tr,va in folds.split(np.zeros(len(y)),y):
                     for name,p in predict(records,subject,tr,va).items():

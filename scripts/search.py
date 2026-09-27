@@ -20,20 +20,16 @@ BAND_SETS = {
     "all": (0, 1, 2, 3, 4, 5),
     "motor": (1, 2, 3, 4),
     "mu_beta": (1, 3, 4),
-    "mu": (1, 2),
-    "beta": (3, 4, 5),
 }
 WINDOWS = {"full": (0, 1000), "early": (0, 625), "late": (375, 1000),
-           "middle": (125, 875), "late2": (500, 1000)}
+           "middle": (125, 875)}
 SLICES = {
     "one": ((0, 1),),
     "two": ((0, 0.5), (0.5, 1)),
-    "three": ((0, 1/3), (1/3, 2/3), (2/3, 1)),
     "one_two": ((0, 1), (0, 0.5), (0.5, 1)),
 }
 MODELS = {"logreg03": ("logreg", .03), "logreg3": ("logreg", .3),
-          "logreg30": ("logreg", 3), "lda": ("lda", 0),
-          "svm05": ("svm", .5), "svm3": ("svm", 3)}
+          "lda": ("lda", 0), "svm3": ("svm", 3)}
 
 
 def features(bank, indices, window, slices):

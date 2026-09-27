@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.linalg import eigh
+from scipy.linalg import eigh, logm
 from scipy.signal import butter, sosfiltfilt
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import LogisticRegression
@@ -96,6 +96,33 @@ def csp_features(filtered, spatial):
     return np.hstack(feats)
 
 
+def covariance_features(train_bank, query_bank):
+    features = []
+    queries = []
+    for tr, qu in zip(train_bank, query_bank):
+        def covariance(x):
+            c = np.matmul(x, np.swapaxes(x, -1, -2)) / x.shape[-1]
+            c /= np.trace(c, axis1=1, axis2=2)[:, None, None] + 1e-12
+            return c
+        train_cov = covariance(tr)
+        query_cov = covariance(qu)
+        mean = train_cov.mean(axis=0)
+        scale = 0.1 * np.trace(mean) / len(CHANNELS)
+        eigval, eigvec = eigh(mean + scale * np.eye(len(CHANNELS)))
+        whitening = (eigvec / np.sqrt(eigval)) @ eigvec.T
+        upper = np.triu_indices(len(CHANNELS))
+        def transform(covs):
+            outputs = []
+            for cov in covs:
+                val, vec = eigh(whitening @ cov @ whitening + 1e-6 * np.eye(len(CHANNELS)))
+                tangent = (vec * np.log(np.maximum(val, 1e-9))) @ vec.T
+                outputs.append(tangent[upper])
+            return np.asarray(outputs)
+        features.append(transform(train_cov))
+        queries.append(transform(query_cov))
+    return np.hstack(features), np.hstack(queries)
+
+
 def predict(train_bank, train_y, query_bank, method):
     if method == "bandpower":
         x, query = band_features(train_bank), band_features(query_bank)
@@ -104,6 +131,9 @@ def predict(train_bank, train_y, query_bank, method):
         spatial = [fit_csp(band, train_y) for band in train_bank]
         x, query = csp_features(train_bank, spatial), csp_features(query_bank, spatial)
         classifier = make_pipeline(StandardScaler(), LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto"))
+    elif method == "covariance":
+        x, query = covariance_features(train_bank, query_bank)
+        classifier = make_pipeline(StandardScaler(), LogisticRegression(C=0.03, max_iter=2000))
     else:
         raise ValueError(method)
     classifier.fit(x, train_y)
@@ -150,9 +180,9 @@ def main():
             if len(np.unique(train_y)) != 2:
                 raise ValueError(f"Training set lacks both classes for {subject}")
             val_predictions = {}
-            for method in ("bandpower", "csp"):
+            for method in ("bandpower", "csp", "covariance"):
                 val_predictions[method] = predict(train_bank, train_y, val_bank, method)
-            val_predictions["blend"] = 0.35 * val_predictions["bandpower"] + 0.65 * val_predictions["csp"]
+            val_predictions["blend"] = 0.35 * val_predictions["bandpower"] + 0.65 * val_predictions["csp"]\n            val_predictions["band_cov_blend"] = 0.5 * val_predictions["bandpower"] + 0.5 * val_predictions["covariance"]
             accuracy = {key: float(np.mean((prob >= 0.5) == val_y))
                         for key, prob in val_predictions.items()}
             scores.append({"subject": subject, "validation_session": valid[0],
@@ -160,9 +190,8 @@ def main():
             full_bank = [np.concatenate([s[1][i] for s in sessions]) for i in range(len(BANDS))]
             full_y = np.concatenate([s[2] for s in sessions])
             probs = {method: predict(full_bank, full_y, test_bank, method)
-                     for method in ("bandpower", "csp")}
-            predictions.extend((0.35 * probs["bandpower"] + 0.65 * probs["csp"] >= 0.5)
-                               .astype(int).tolist())
+                     for method in ("bandpower", "csp", "covariance")}
+            predictions.extend((probs["bandpower"] >= 0.5).astype(int).tolist())
             print(subject, len(full_y), len(val_y), accuracy, flush=True)
 
     if len(predictions) != 680:
@@ -174,9 +203,9 @@ def main():
     submission.to_csv("output/submission.csv", index=False)
     total = sum(x["validation_trials"] for x in scores)
     overall = {name: sum(x["accuracy"][name] * x["validation_trials"] for x in scores) / total
-               for name in ("bandpower", "csp", "blend")}
+               for name in ("bandpower", "csp", "covariance", "blend", "band_cov_blend")}
     report = {"validation": "last recording session held out per subject",
-              "validation_trials": total, "overall_accuracy": overall,
+              "validation_trials": total, "overall_accuracy": overall,\n              "submission_method": "bandpower",
               "subjects": scores, "submission_rows": len(submission),
               "submission_class_counts": submission["TARGET"].value_counts().to_dict()}
     Path("output/report.json").write_text(json.dumps(report, indent=2))

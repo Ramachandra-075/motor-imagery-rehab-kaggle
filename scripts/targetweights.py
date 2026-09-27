@@ -69,7 +69,7 @@ def main():
                 "rich":{ref:rich_features(x,ref) for ref in REFS}}
             print("features",subject,flush=True)
     results={}
-    for regime in ("fivefold","recent","other"):
+    for regime in ("fivefold","recent","other","first"):
         hits=defaultdict(int)
         counts=defaultdict(int)
         aucs=defaultdict(list)
@@ -85,9 +85,10 @@ def main():
                         oof[name][va]=p
                 truth=y
             else:
-                if regime=="other" and len(record["sessions"])<3:
+                if regime in ("other","first") and len(record["sessions"])<3:
                     continue
-                sid=record["sessions"][-1][0] if regime=="recent" else record["sessions"][1][0]
+                sid=(record["sessions"][-1][0] if regime=="recent" else
+                     record["sessions"][1][0] if regime=="other" else record["sessions"][0][0])
                 va=np.flatnonzero(record["groups"]==sid)
                 tr=np.flatnonzero(record["groups"]!=sid)
                 oof=predict(records,subject,tr,va)

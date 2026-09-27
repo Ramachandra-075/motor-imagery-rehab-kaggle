@@ -1,0 +1,7 @@
+data/
+output/
+*.zip
+.env
+kaggle.json
+__pycache__/
+*.pyc

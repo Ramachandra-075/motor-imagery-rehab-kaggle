@@ -1,0 +1,49 @@
+name: Build V6 CSV without Kaggle submission
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-v6.yml"
+      - "scripts/submit_v6.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install kaggle numpy pandas scipy scikit-learn
+      - run: |
+          mkdir -p data
+          kaggle competitions download -c low-cost-motor-imagery-decoding-for-rehab -p data
+      - run: python scripts/submit_v6.py
+      - name: Validate 680 predictions
+        run: |
+          python - <<'PY'
+          import csv
+          from collections import Counter
+          with open('output/submission.csv',newline='') as handle:
+              reader=csv.DictReader(handle)
+              assert reader.fieldnames==['ID','TARGET']
+              rows=list(reader)
+          assert len(rows)==680
+          assert all(r['ID']==str(i) and r['TARGET'] in ('move','rest')
+                     for i,r in enumerate(rows))
+          assert all(Counter(r['TARGET'] for r in rows[i:i+40])=={'move':20,'rest':20}
+                     for i in range(0,680,40))
+          print('Validated 680 predictions and 17 balanced subjects')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eeg-v6-candidate
+          path: output/
+          retention-days: 30

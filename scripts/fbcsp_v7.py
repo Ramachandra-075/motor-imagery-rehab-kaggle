@@ -83,7 +83,7 @@ def main():
                         for ref in ("car","laplacian")}}
             print("features",subject,flush=True)
     results={}
-    for regime in ("fivefold","recent","other"):
+    for regime in ("fivefold","recent","other","first"):
         hits=defaultdict(int)
         totals=defaultdict(int)
         aucs=defaultdict(list)
@@ -107,10 +107,11 @@ def main():
                             out[name][va]=p
                     truth=y
                 else:
-                    if regime=="other" and len(record["sessions"])<3:
+                    if regime in ("other","first") and len(record["sessions"])<3:
                         continue
                     sid=(record["sessions"][-1][0] if regime=="recent" else
-                         record["sessions"][1][0])
+                         record["sessions"][1][0] if regime=="other" else
+                         record["sessions"][0][0])
                     va=np.flatnonzero(record["groups"]==sid)
                     tr=np.flatnonzero(record["groups"]!=sid)
                     v6=probabilities(records,subject,tr,va)["blend75"]

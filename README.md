@@ -82,3 +82,10 @@ V7 combines **75% V6** with **25% regularized filter-bank common spatial pattern
 | V7 | 1455/1795 (**0.8106**) | **0.8838** | 123/170 (0.7235) | 626/800 (0.7825) | 606/775 (0.7819) |
 
 The FBCSP model alone scored 0.755 five-fold accuracy and 0.718 on the larger held-out session; its gain comes from complementary predictions in the blend. V7 changes 36 of the 680 V6 labels. The five-fold accuracy exceeds 0.80, but session-held-out scores remain below it and public Kaggle accuracy is unknown pending a manual submission. The paper results are from different datasets and do not imply the same Kaggle score here.
+
+
+## Public-score update (28 September 2026)
+
+The user manually submitted V6 and V7: **V6 scored 0.79**, while **V7 scored 0.78** public accuracy. V6 remains selected. This provides direct evidence that V7's higher random five-fold accuracy (0.811 versus 0.787) did not transfer to the public test set; V7 also lost accuracy on two of three held-out session checks. There are three daily submission slots remaining by the user's report. No further submissions are made by the workflows.
+
+A separate trial-order diagnostic counted 50 labeled sessions. The observed class-change rate was **0.511**, only **54/180** ten-trial blocks were exactly balanced, and **35/50** sessions were exactly balanced. A strong alternation or fixed 10-trial balance prior is therefore unsupported; do not replace EEG predictions with a sequence rule.

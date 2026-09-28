@@ -96,12 +96,15 @@ def main():
                 y=record["y"]
                 if regime=="fivefold":
                     folds=StratifiedKFold(n_splits=5,shuffle=True,random_state=20260927)
-                    names=("v6","csp","csp25","csp50")
+                    names=("v6","csp","csp10","csp15","csp20","csp25","csp50")
                     out={name:np.full(len(y),np.nan) for name in names}
                     for tr,va in folds.split(np.zeros(len(y)),y):
                         v6=probabilities(records,subject,tr,va)["blend75"]
                         csp=score_csp(banks,y,tr,va)
                         for name,p in (("v6",v6),("csp",csp),
+                                       ("csp10",.9*v6+.1*csp),
+                                       ("csp15",.85*v6+.15*csp),
+                                       ("csp20",.8*v6+.2*csp),
                                        ("csp25",.75*v6+.25*csp),
                                        ("csp50",.5*v6+.5*csp)):
                             out[name][va]=p
@@ -116,7 +119,9 @@ def main():
                     tr=np.flatnonzero(record["groups"]!=sid)
                     v6=probabilities(records,subject,tr,va)["blend75"]
                     csp=score_csp(banks,y,tr,va)
-                    out={"v6":v6,"csp":csp,"csp25":.75*v6+.25*csp,
+                    out={"v6":v6,"csp":csp,"csp10":.9*v6+.1*csp,
+                         "csp15":.85*v6+.15*csp,"csp20":.8*v6+.2*csp,
+                         "csp25":.75*v6+.25*csp,
                          "csp50":.5*v6+.5*csp}
                     truth=y[va]
                 for name,p in out.items():

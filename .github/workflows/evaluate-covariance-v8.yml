@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/evaluate-covariance-v8.yml"
+      - "scripts/covariance_v8.py"
   workflow_dispatch:
 permissions:
   contents: read

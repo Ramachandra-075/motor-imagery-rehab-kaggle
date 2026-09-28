@@ -68,3 +68,17 @@ The [V6 build workflow](.github/workflows/build-v6.yml) creates and validates a 
 | V6 | 1413/1795 (0.7872) | 0.8682 | 127/170 (0.7471) | 622/800 (0.7775) | 608/775 (0.7845) |
 
 The earliest-session check was run after V6 was selected based on the five-fold and other two session scores. It shows V6 slightly below V5 there, while V6 remains higher on the other measures. Different regularization settings and target-subject sample weights improved five-fold accuracy to approximately 0.795 but performed worse on at least one session-held-out split. Those were not promoted as the candidate. None of these local checks establishes public Kaggle accuracy of 0.80: **V6 has not been submitted**.
+
+
+## Paper-informed V7 candidate (28 September 2026)
+
+The user reported **0.79 public accuracy** for the submitted previous candidate. V7 has **not** been submitted. The [V7 build workflow](.github/workflows/build-v7.yml) only downloads data, runs [scripts/submit_v7.py](scripts/submit_v7.py), validates 680 predictions, and uploads the artifact. It contains no Kaggle submission command.
+
+V7 combines **75% V6** with **25% regularized filter-bank common spatial pattern (CSP)**. The CSP branch uses eight 4-Hz frequency bands from 4 to 36 Hz, subject-specific supervised spatial filters with covariance shrinkage, baseline-relative log power and temporal windows, and training-only selection of 12 features before regularized logistic classification. The motivation comes from [Ang et al., Filter Bank Common Spatial Pattern Algorithm (2012)](https://doi.org/10.3389/fnins.2012.00039) and [He and Wu, Spatial Filtering for Brain Computer Interfaces (2018)](https://arxiv.org/abs/1808.06533); the implementation is adapted for this competition's eight channels and limited training trials.
+
+| Method | Five-fold accuracy | Five-fold subject-weighted ROC-AUC | Recent session | Second session | Earliest session |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| V6 | 1413/1795 (0.7872) | 0.8682 | 127/170 (0.7471) | 622/800 (0.7775) | 608/775 (0.7845) |
+| V7 | 1455/1795 (**0.8106**) | **0.8838** | 123/170 (0.7235) | 626/800 (0.7825) | 606/775 (0.7819) |
+
+The FBCSP model alone scored 0.755 five-fold accuracy and 0.718 on the larger held-out session; its gain comes from complementary predictions in the blend. V7 changes 36 of the 680 V6 labels. The five-fold accuracy exceeds 0.80, but session-held-out scores remain below it and public Kaggle accuracy is unknown pending a manual submission. The paper results are from different datasets and do not imply the same Kaggle score here.

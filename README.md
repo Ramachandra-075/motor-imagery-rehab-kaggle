@@ -89,3 +89,18 @@ The FBCSP model alone scored 0.755 five-fold accuracy and 0.718 on the larger he
 The user manually submitted V6 and V7: **V6 scored 0.79**, while **V7 scored 0.78** public accuracy. V6 remains selected. This provides direct evidence that V7's higher random five-fold accuracy (0.811 versus 0.787) did not transfer to the public test set; V7 also lost accuracy on two of three held-out session checks. There are three daily submission slots remaining by the user's report. No further submissions are made by the workflows.
 
 A separate trial-order diagnostic counted 50 labeled sessions. The observed class-change rate was **0.511**, only **54/180** ten-trial blocks were exactly balanced, and **35/50** sessions were exactly balanced. A strong alternation or fixed 10-trial balance prior is therefore unsupported; do not replace EEG predictions with a sequence rule.
+
+
+### Daily-slot protection (28 September 2026)
+
+The user's screenshot confirms V6 **0.79**, V7 **0.78**, and V6 selected, with three submissions left. The dataset inspection clarified class balance: **all 32 50-trial training sessions are 25 move / 25 rest**, while only **3 of 17 10-trial sessions are 5 / 5**. Thus half-and-half labeling is supported by 50-trial sessions, and their held-out accuracy is more informative than the 10-trial split.
+
+Two validation-only follow-ups did not justify a submission:
+
+| Method | Five-fold accuracy | Held-out second session | Held-out earliest session |
+| --- | ---: | ---: | ---: |
+| V6 | 1413/1795 (0.787) | 622/800 (0.778) | 608/775 (0.785) |
+| 10% CSP blend | 1435/1795 (0.799) | 620/800 (0.775) | 606/775 (0.782) |
+| 25% session-normalized blend | 1417/1795 (0.789) | 612/800 (0.765) | 604/775 (0.779) |
+
+The richer five-fold scores cannot be used as a proxy for leaderboard improvement after V7's observed decline. Preserve the remaining submissions for a candidate that improves across sessions.

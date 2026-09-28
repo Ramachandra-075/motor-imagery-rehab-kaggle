@@ -104,3 +104,11 @@ Two validation-only follow-ups did not justify a submission:
 | 25% session-normalized blend | 1417/1795 (0.789) | 612/800 (0.765) | 604/775 (0.779) |
 
 The richer five-fold scores cannot be used as a proxy for leaderboard improvement after V7's observed decline. Preserve the remaining submissions for a candidate that improves across sessions.
+
+## V8 and V9 research (28 September 2026)
+
+The proposed filter-bank covariance tangent features were evaluated on three held-out recording-session checks and five-fold out-of-fold predictions. A 30% covariance blend returned 1419/1795 (0.7905) five-fold, 127/170 recent, 610/800 middle, and 648/825 earliest; it was rejected against the V6 benchmark. The covariance method drew on published filter-bank Riemannian EEG feature work (Fang et al., 2022, PMID 35085095). Our small-channel implementation did not translate to a held-out session improvement.
+
+V9 adds a local, regularized CatBoost model of narrow-band temporal spectral features (220 iterations, depth 4) at 30% weight to V6 at 70% weight. Validation: five-fold subject-wise 1433/1795 = **0.7983**, weighted ROC-AUC 0.8730; held-out recent 131/170 = 0.7706, middle 626/800 = 0.7825, earliest 654/825 = 0.7927. The matching V6 scores in these checks are 1413/1795, 127/170, 622/800, 644/825. The earliest check includes 825 rows because it holds out the first recording for all 17 subjects. Validation makes a score above 0.80 plausible, but **does not establish a Kaggle score above 0.80**. V6's public Kaggle score remains the best measured at 0.79 until the user submits V9 manually.
+
+Run `python scripts/nonlinear_v9.py` to reproduce V9 validation, or trigger `.github/workflows/build-v9.yml` to generate `output/submission.csv`. The workflow validates 680 ordered rows and the 20/20 per-subject prediction distribution. Neither script submits to Kaggle.

@@ -8,7 +8,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-from scipy.linalg import eigh
 from scipy.signal import butter, sosfiltfilt
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
@@ -44,11 +43,11 @@ def covariance_features(epochs):
             cov=cov+np.eye(len(CHANNELS))[None,:,:]*.025
             matrices.append(cov)
         reference=np.mean(np.concatenate(matrices,axis=0),axis=0)
-        values,vectors=eigh(reference)
+        values,vectors=np.linalg.eigh(reference)
         whiten=(vectors/np.sqrt(np.maximum(values,1e-8)))@vectors.T
         for cov in matrices:
             aligned=whiten[None,:,:]@cov@whiten[None,:,:]
-            values,vectors=eigh(aligned)
+            values,vectors=np.linalg.eigh(aligned)
             logged=(vectors*np.log(np.maximum(values,1e-8))[:,None,:])@vectors.transpose(0,2,1)
             rows.append(logged[:,tri[0],tri[1]])
     return np.concatenate(rows,axis=1).astype(np.float32)

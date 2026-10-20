@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: eeg-research-loop
+  group: eeg-research-grid-loop
   cancel-in-progress: false
 
 jobs:

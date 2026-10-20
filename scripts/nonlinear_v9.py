@@ -39,7 +39,7 @@ def rich_features(epochs, reference):
     return np.hstack(features).astype(np.float32)
 
 
-def probabilities(records, subject, train_ix, valid_ix):
+def probabilities(records, subject, train_ix, valid_ix, rich_c=0.03, cat_params=None):
     record=records[subject]
     probs={"old_local":[],"old_pooled":[],"rich_local":[],"rich_pooled":[],"cat":[]}
     for ref,method in REFS:
@@ -48,7 +48,7 @@ def probabilities(records, subject, train_ix, valid_ix):
             if family=="old":
                 clf=model(method)
             else:
-                clf=make_pipeline(StandardScaler(),LogisticRegression(C=.03,max_iter=1500))
+                clf=make_pipeline(StandardScaler(),LogisticRegression(C=rich_c,max_iter=1500))
             clf.fit(x[train_ix],record["y"][train_ix])
             probs[family+"_local"].append(clf.predict_proba(x[valid_ix])[:,1])
             tr,labels=[],[]
@@ -60,12 +60,15 @@ def probabilities(records, subject, train_ix, valid_ix):
                 labels.append(other["y"][use])
                 if other_subject==subject:
                     query=scaler.transform(x[valid_ix])
-            global_clf=LogisticRegression(C=.03,max_iter=1500)
+            global_clf=LogisticRegression(C=rich_c,max_iter=1500)
             global_clf.fit(np.concatenate(tr),np.concatenate(labels))
             probs[family+"_pooled"].append(global_clf.predict_proba(query)[:,1])
-        cat=CatBoostClassifier(iterations=220,depth=4,learning_rate=.04,
-            l2_leaf_reg=10,loss_function="Logloss",verbose=False,
-            thread_count=1,random_seed=20260928)
+        settings={"iterations":220,"depth":4,"learning_rate":.04,
+            "l2_leaf_reg":10,"loss_function":"Logloss","verbose":False,
+            "thread_count":1,"random_seed":20260928}
+        if cat_params:
+            settings.update(cat_params)
+        cat=CatBoostClassifier(**settings)
         cat.fit(record["rich"][ref][train_ix],record["y"][train_ix])
         probs["cat"].append(cat.predict_proba(record["rich"][ref][valid_ix])[:,1])
     old=.5*np.mean(probs["old_local"],axis=0)+.5*np.mean(probs["old_pooled"],axis=0)

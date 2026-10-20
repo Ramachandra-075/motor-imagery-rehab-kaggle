@@ -60,7 +60,8 @@ def probabilities(records, subject, train_ix, valid_ix, rich_c=0.03, cat_params=
                 labels.append(other["y"][use])
                 if other_subject==subject:
                     query=scaler.transform(x[valid_ix])
-            global_clf=LogisticRegression(C=rich_c,max_iter=1500)
+            global_c = rich_c if family == "rich" else 0.03
+            global_clf=LogisticRegression(C=global_c,max_iter=1500)
             global_clf.fit(np.concatenate(tr),np.concatenate(labels))
             probs[family+"_pooled"].append(global_clf.predict_proba(query)[:,1])
         settings={"iterations":220,"depth":4,"learning_rate":.04,

@@ -60,8 +60,8 @@ def main():
                     subject_truth.extend(y[valid_ix].astype(int).tolist())
                     subject_probs.extend((out["v6"], out["cat"]))
                 truth = np.asarray(subject_truth, dtype=int)
-                v6 = subject_probs[0::2]
-                cat = subject_probs[1::2]
+                v6 = np.concatenate(subject_probs[0::2])
+                cat = np.concatenate(subject_probs[1::2])
                 # Fold-specific class balancing is applied below using the exact same
                 # deterministic five-fold splits as the validation baseline.
                 fold_splits = list(StratifiedKFold(n_splits=5, shuffle=True, random_state=20260927).split(

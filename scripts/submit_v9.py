@@ -19,6 +19,11 @@ REFS=(("car","logreg03"),("laplacian","lda"))
 
 
 def main():
+    grid = json.loads(Path("output/research_grid.json").read_text())
+    best = grid["best_candidate"]
+    rich_c = float(best["rich_logistic_C"])
+    cat_config = {k: v for k, v in best["catboost"].items() if k != "name"}
+    cat_weight = float(best["catboost_blend_weight"])
     records={}
     with zipfile.ZipFile(next(Path("data").glob("*.zip"))) as archive:
         trains,tests=discover(archive)
@@ -45,7 +50,8 @@ def main():
                 x_all[subject]=scaler.transform(record[family+"_train"][ref])
                 y_all.append(record["y"])
                 query[subject]=scaler.transform(record[family+"_test"][ref])
-            global_model=LogisticRegression(C=.03,max_iter=1500)
+            global_c = rich_c if family == "rich" else 0.03
+            global_model=LogisticRegression(C=global_c,max_iter=1500)
             global_model.fit(np.concatenate(list(x_all.values())),np.concatenate(y_all))
             for subject in records:
                 pooled[subject][family].append(global_model.predict_proba(query[subject])[:,1])
@@ -56,18 +62,20 @@ def main():
             old_model=model(method)
             old_model.fit(record["old_train"][ref],record["y"])
             local["old"].append(old_model.predict_proba(record["old_test"][ref])[:,1])
-            rich_model=make_pipeline(StandardScaler(),LogisticRegression(C=.03,max_iter=1500))
+            rich_model=make_pipeline(StandardScaler(),LogisticRegression(C=rich_c,max_iter=1500))
             rich_model.fit(record["rich_train"][ref],record["y"])
             local["rich"].append(rich_model.predict_proba(record["rich_test"][ref])[:,1])
-            cat=CatBoostClassifier(iterations=220,depth=4,learning_rate=.04,
-                l2_leaf_reg=10,loss_function="Logloss",verbose=False,
-                thread_count=1,random_seed=20260928)
+            cat_settings={"iterations":220,"depth":4,"learning_rate":.04,
+                "l2_leaf_reg":10,"loss_function":"Logloss","verbose":False,
+                "thread_count":1,"random_seed":20260928}
+            cat_settings.update(cat_config)
+            cat=CatBoostClassifier(**cat_settings)
             cat.fit(record["rich_train"][ref],record["y"])
             local["cat"].append(cat.predict_proba(record["rich_test"][ref])[:,1])
         old=.5*np.mean(local["old"],axis=0)+.5*np.mean(pooled[subject]["old"],axis=0)
         rich=.5*np.mean(local["rich"],axis=0)+.5*np.mean(pooled[subject]["rich"],axis=0)
         v6=.25*old+.75*rich
-        labels=balanced_labels(.7*v6+.3*np.mean(local["cat"],axis=0),20)
+        labels=balanced_labels((1.0-cat_weight)*v6+cat_weight*np.mean(local["cat"],axis=0),20)
         predictions.extend(np.where(labels,"move","rest").tolist())
         print("predicted",subject,len(record["y"]),int(labels.sum()),flush=True)
     if len(predictions)!=680:
@@ -78,13 +86,17 @@ def main():
         writer.writerow(["ID","TARGET"])
         writer.writerows(enumerate(predictions))
     Path("output/report.json").write_text(json.dumps({
-        "method":"70% V6 narrow-band spectral transfer + 30% local CatBoost",
-        "fivefold":{"correct":1433,"total":1795,"accuracy":1433/1795,
-                    "subject_weighted_auc":0.8730},
-        "recent_session":{"correct":131,"total":170,"accuracy":131/170},
-        "middle_session":{"correct":626,"total":800,"accuracy":626/800},
-        "earliest_session":{"correct":654,"total":825,"accuracy":654/825},
-        "kaggle_public_score":"not submitted"
+        "method":"selected EEG research-grid candidate",
+        "selected_candidate":best,
+        "fivefold_oof_accuracy":best["accuracy"],
+        "fivefold_oof_correct":best["correct"],
+        "fivefold_oof_total":best["total"],
+        "confusion_matrix":best["confusion_matrix"],
+        "confusion_matrix_labels":best["labels"],
+        "target_accuracy":0.90,
+        "target_reached":bool(best["accuracy"] > 0.90),
+        "kaggle_public_score":"not submitted",
+        "kaggle_submitted":False
     },indent=2))
 
 

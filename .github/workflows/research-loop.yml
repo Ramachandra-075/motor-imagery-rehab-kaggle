@@ -1,0 +1,81 @@
+name: Continuous EEG research loop (no Kaggle submissions)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # GitHub-hosted runners are finite; restart research on a recurring schedule.
+    - cron: "23 */6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/research-loop.yml"
+      - "scripts/nonlinear_v9.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eeg-research-loop
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install EEG research dependencies
+        run: python -m pip install kaggle numpy pandas scipy scikit-learn catboost
+      - name: Download competition data
+        run: |
+          mkdir -p data output
+          kaggle competitions download -c low-cost-motor-imagery-decoding-for-rehab -p data
+      - name: Run model/blend validation and calculate OOF confusion matrix
+        run: python scripts/nonlinear_v9.py
+      - name: Build final candidate CSV (never submit)
+        run: python scripts/submit_v9.py
+      - name: Validate candidate and compare with 90% threshold
+        shell: bash
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          report = json.loads(Path("output/nonlinear_v9.json").read_text())
+          cm = report["fivefold_confusion_matrix"]
+          with open("output/submission.csv", newline="") as f:
+              reader = csv.DictReader(f)
+              assert reader.fieldnames == ["ID", "TARGET"]
+              rows = list(reader)
+          assert len(rows) == 680
+          assert all(r["ID"] == str(i) and r["TARGET"] in {"move", "rest"} for i, r in enumerate(rows))
+          score = float(cm["oof_accuracy"])
+          print(f"VALIDATION_ACCURACY={score:.6%}")
+          print(f"TARGET_STRICTLY_ABOVE_90={score > 0.90}")
+          print("CONFUSION_MATRIX labels=[rest, move], rows=actual, columns=predicted")
+          print(cm["matrix"])
+          if score > 0.90:
+              print("TARGET_REACHED: candidate is ready for human review only; no submission was made.")
+          else:
+              print("TARGET_NOT_REACHED: artifact saved; next scheduled run will repeat validation and comparison.")
+          print("KAGGLE_SUBMITTED=false")
+          PY
+      - name: Upload CSV, validation metrics and confusion matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eeg-research-loop-${{ github.run_id }}
+          path: |
+            output/submission.csv
+            output/report.json
+            output/nonlinear_v9.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -11,6 +11,7 @@ on:
       - "scripts/nonlinear_v9.py"
       - "scripts/research_grid.py"
       - "scripts/riemann_research.py"
+      - "scripts/session_shift_research.py"
       - "scripts/submit_v9.py"
 
 permissions:
@@ -42,6 +43,8 @@ jobs:
           kaggle competitions download -c low-cost-motor-imagery-decoding-for-rehab -p data
       - name: Run model/blend validation and calculate OOF confusion matrix
         run: python scripts/nonlinear_v9.py
+      - name: Compare whole-session validation with unsupervised CORAL domain alignment
+        run: python scripts/session_shift_research.py
       - name: Search distinct EEG model and hyperparameter candidates
         run: python scripts/research_grid.py
       - name: Research filter-bank Riemannian tangent-space model
@@ -90,5 +93,6 @@ jobs:
             output/nonlinear_v9.json
             output/research_grid.json
             output/riemann_research.json
+            output/session_shift_research.json
           if-no-files-found: warn
           retention-days: 30

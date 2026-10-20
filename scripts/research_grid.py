@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 
-from baseline import trials
+from baseline import build_features, trials
 from nonlinear_v9 import REFS, probabilities, rich_features
 from train import balanced_labels, discover
 
@@ -35,7 +35,7 @@ def main():
             records[subject] = {
                 "y": np.concatenate([s[2] for s in sessions]),
                 "sessions": sessions,
-                "old": {ref: None for ref, _ in REFS},
+                "old": {ref: build_features(x, ref, "post_halves_ratio") for ref, _ in REFS},
                 "rich": {ref: rich_features(x, ref) for ref, _ in REFS},
             }
             print("grid features", subject, flush=True)

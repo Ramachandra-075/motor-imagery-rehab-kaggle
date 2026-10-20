@@ -10,6 +10,8 @@ on:
     paths:
       - ".github/workflows/research-loop.yml"
       - "scripts/nonlinear_v9.py"
+      - "scripts/research_grid.py"
+      - "scripts/submit_v9.py"
 
 permissions:
   contents: read
@@ -40,7 +42,9 @@ jobs:
           kaggle competitions download -c low-cost-motor-imagery-decoding-for-rehab -p data
       - name: Run model/blend validation and calculate OOF confusion matrix
         run: python scripts/nonlinear_v9.py
-      - name: Build final candidate CSV (never submit)
+      - name: Search distinct EEG model and hyperparameter candidates
+        run: python scripts/research_grid.py
+      - name: Build final candidate CSV from the best validated candidate (never submit)
         run: python scripts/submit_v9.py
       - name: Validate candidate and compare with 90% threshold
         shell: bash
@@ -48,8 +52,9 @@ jobs:
           python - <<'PY'
           import csv, json
           from pathlib import Path
-          report = json.loads(Path("output/nonlinear_v9.json").read_text())
-          cm = report["fivefold_confusion_matrix"]
+          report = json.loads(Path("output/research_grid.json").read_text())
+          best = report["best_candidate"]
+          cm = {"matrix": best["confusion_matrix"], "labels": best["labels"], "oof_accuracy": best["accuracy"]}
           with open("output/submission.csv", newline="") as f:
               reader = csv.DictReader(f)
               assert reader.fieldnames == ["ID", "TARGET"]
@@ -59,6 +64,7 @@ jobs:
           score = float(cm["oof_accuracy"])
           print(f"VALIDATION_ACCURACY={score:.6%}")
           print(f"TARGET_STRICTLY_ABOVE_90={score > 0.90}")
+          print("SELECTED_CONFIG=" + json.dumps({k: best[k] for k in ("rich_logistic_C", "catboost", "catboost_blend_weight")}))
           print("CONFUSION_MATRIX labels=[rest, move], rows=actual, columns=predicted")
           print(cm["matrix"])
           if score > 0.90:
@@ -76,5 +82,6 @@ jobs:
             output/submission.csv
             output/report.json
             output/nonlinear_v9.json
+            output/research_grid.json
           if-no-files-found: warn
           retention-days: 30

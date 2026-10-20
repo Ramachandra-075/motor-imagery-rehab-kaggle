@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.signal import butter, sosfiltfilt
+from sklearn.metrics import confusion_matrix
 from catboost import CatBoostClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
@@ -89,6 +90,8 @@ def main():
                 "rich":{ref:rich_features(x,ref) for ref,_ in REFS}}
             print("features",subject,flush=True)
     results={}
+    oof_truth=[]
+    oof_pred=[]
     for regime in ("recent","other","earliest","fivefold"):
         hits=defaultdict(int)
         counts=defaultdict(int)
@@ -111,6 +114,11 @@ def main():
                 tr=np.flatnonzero(record["groups"]!=sid)
                 out=probabilities(records,subject,tr,va)
                 truth=y[va]
+            if regime=="fivefold":
+                # Save true out-of-fold labels and predictions for the V9 blend.
+                # Each trial is predicted by a model that did not train on it.
+                oof_truth.extend(np.asarray(truth,dtype=int).tolist())
+                oof_pred.extend(balanced_labels(out["blend30"],len(truth)//2).astype(int).tolist())
             for name,p in out.items():
                 assert np.isfinite(p).all(),(subject,name)
                 pred=balanced_labels(p,len(p)//2)
@@ -125,7 +133,23 @@ def main():
             for name in hits}
         print("RESULT",regime,json.dumps(results[regime]),flush=True)
     Path("output").mkdir(exist_ok=True)
+    cm=confusion_matrix(oof_truth,oof_pred,labels=[0,1])
+    results["fivefold_confusion_matrix"]={
+        "labels":["rest","move"],
+        "matrix":cm.tolist(),
+        "rows":"actual",
+        "columns":"predicted",
+        "true_negative_rest":int(cm[0,0]),
+        "rest_predicted_move":int(cm[0,1]),
+        "move_predicted_rest":int(cm[1,0]),
+        "true_positive_move":int(cm[1,1]),
+        "oof_accuracy":float(np.mean(np.asarray(oof_truth)==np.asarray(oof_pred))),
+        "target_accuracy":0.90,
+        "target_reached":bool(np.mean(np.asarray(oof_truth)==np.asarray(oof_pred))>0.90)
+    }
     Path("output/nonlinear_v9.json").write_text(json.dumps(results,indent=2))
+    print("OOF_CONFUSION_MATRIX",json.dumps(results["fivefold_confusion_matrix"]),flush=True)
+    print("RESEARCH_TARGET", "REACHED" if results["fivefold_confusion_matrix"]["target_reached"] else "NOT_REACHED; next scheduled research run will compare again",flush=True)
 
 
 if __name__=="__main__":

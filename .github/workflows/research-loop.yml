@@ -12,6 +12,7 @@ on:
       - "scripts/research_grid.py"
       - "scripts/riemann_research.py"
       - "scripts/session_shift_research.py"
+      - "scripts/csp_tuning.py"
       - "scripts/submit_v9.py"
 
 permissions:
@@ -45,6 +46,8 @@ jobs:
         run: python scripts/nonlinear_v9.py
       - name: Compare whole-session validation with unsupervised CORAL domain alignment
         run: python scripts/session_shift_research.py
+      - name: Tune CSP component counts and classifiers on held-out sessions
+        run: python scripts/csp_tuning.py
       - name: Search distinct EEG model and hyperparameter candidates
         run: python scripts/research_grid.py
       - name: Research filter-bank Riemannian tangent-space model
@@ -94,5 +97,6 @@ jobs:
             output/research_grid.json
             output/riemann_research.json
             output/session_shift_research.json
+            output/csp_tuning.json
           if-no-files-found: warn
           retention-days: 30

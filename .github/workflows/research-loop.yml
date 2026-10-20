@@ -32,7 +32,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
       - name: Install EEG research dependencies
         run: python -m pip install kaggle numpy pandas scipy scikit-learn catboost
       - name: Download competition data
